@@ -1,4 +1,4 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWEPR_3uRTUGRXN4MmedLlWR-F18LtIzATcCrJygVr6WBGAHpJI5pw4av1Fvq60397rw/exec;
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzG4sqCdeQ8-99EkoPIiT5raW4ABXKMM1mhPj4Piv6d3Yf7KfPNuyvIQ6EN14p4bXIbmQ/exec;
 
 // Fungsi untuk berpindah halaman (Navigasi Peran)
 function switchPage(pageId) {
