@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRIVATKU - Sistem Laporan Perkembangan Belajar Siswa</title>
+    <!-- Tailwind CSS & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 glass-header border-b border-slate-200/80 px-4 py-3 shadow-sm">
+        <div class="max-w-md md:max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 leading-tight text-lg tracking-tight">PRIVATKU</h1>
+                    <p class="text-[11px] font-medium text-slate-500">Laporan Perkembangan Siswa</p>
+                </div>
+            </div>
+            
+            <!-- User Status & Logout -->
+            <div id="navUserBadge" class="flex items-center gap-2">
+                <div id="activeRoleBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5">
+                    <span id="roleDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span id="roleBadgeText">Belum Login</span>
+                </div>
+                <button id="btnLogout" onclick="logout()" class="hidden p-2 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-xs font-semibold" title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container Layout -->
+    <main class="w-full max-w-md md:max-w-4xl mx-auto flex-1 p-4 pb-12">
+
+        <!-- SECTION 1: AUTHENTICATION / LOGIN PAGE -->
+        <section id="authSection" class="space-y-6 pt-4 max-w-md mx-auto">
+            <div class="text-center space-y-2">
+                <span class="px-3 py-1 bg-brand-50 text-brand-600 border border-brand-100 text-xs font-bold rounded-full uppercase tracking-wider">Sistem Laporan Real-Time</span>
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Selamat Datang di PRIVATKU</h2>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto">Silakan masuk sesuai dengan hak akses Anda untuk memantau atau mengelola laporan belajar.</p>
+            </div>
+
+            <!-- Login Role Tabs -->
+            <div class="bg-slate-200/60 p-1 rounded-2xl grid grid-cols-2 gap-1">
+                <button id="tabWali" onclick="switchLoginTab('wali')" class="py-2.5 text-xs font-bold rounded-xl transition-all bg-white text-slate-800 shadow-sm">
+                    <i class="fa-solid fa-user-group mr-1.5"></i> Wali Murid
+                </button>
+                <button id="tabGuru" onclick="switchLoginTab('guru')" class="py-2.5 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-chalkboard-user mr-1.5"></i> Guru / Pengajar
+                </button>
+            </div>
+
+            <!-- LOGIN WALI MURID FORM -->
+            <div id="formLoginWali" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-emerald-600"></i> Akses Orang Tua / Wali
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Masukkan Kode PIN Siswa untuk melihat hasil belajar spesifik anak Anda.</p>
+                </div>
+
+                <form onsubmit="handleWaliLogin(event)" class="space-y-3.5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Pilih / Masukkan Nama Anak</label>
+                        <select id="loginSiswaSelect" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                            <option value="">-- Pilih Nama Siswa --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Kode PIN Siswa</label>
+                        <div class="relative">
+                            <input type="password" id="loginSiswaPin" required placeholder="Masukkan PIN (Contoh: 1234)" class="w-full p-2.5 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                            <button type="button" onclick="togglePinVisibility('loginSiswaPin')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-right-to-bracket"></i> Masuk Rapor Anak
+                    </button>
+                </form>
+
+                <!-- Demo Credentials Helper -->
+                <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 text-[11px] text-emerald-800 space-y-1">
+                    <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> Akun Demo Wali Murid:</p>
+                    <p>• <b>Ahmad Rayhan</b> (PIN: <code>1234</code>)</p>
+                    <p>• <b>Siti Aisyah</b> (PIN: <code>5678</code>)</p>
+                    <p>• <b>Dewi Kartika</b> (PIN: <code>8888</code>)</p>
+                </div>
+            </div>
+
+            <!-- LOGIN GURU FORM -->
+            <div id="formLoginGuru" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-user-lock text-brand-600"></i> Akses Portal Guru
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Masuk untuk mengelola laporan dan melihat rekapitulasi siswa.</p>
+                </div>
+
+                <form onsubmit="handleGuruLogin(event)" class="space-y-3.5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Username / ID Guru</label>
+                        <select id="loginGuruSelect" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                            <option value="">-- Pilih Akun Guru --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Kata Sandi / Password</label>
+                        <input type="password" id="loginGuruPass" required placeholder="Masukkan Password (Default: guru123)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-right-to-bracket"></i> Masuk Dashboard Guru
+                    </button>
+                </form>
+
+                <!-- Demo Credentials Helper Guru -->
+                <div class="p-3 bg-brand-50/60 rounded-xl border border-brand-100 text-[11px] text-brand-800 space-y-1">
+                    <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> Akun Demo Guru Multi-Teacher:</p>
+                    <p>• <b>Ahmad Fauzi, S.Pd</b> (Pass: <code>guru123</code>)</p>
+                    <p>• <b>Nabila Putri, M.Pd</b> (Pass: <code>guru123</code>)</p>
+                </div>
+            </div>
+
+            <!-- Informational Banner Card -->
+            <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md flex items-start gap-3">
+                <div class="p-2 bg-white/10 rounded-xl text-amber-300 text-lg">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div class="text-xs space-y-1">
+                    <p class="font-semibold text-white">Sinkronisasi Database GAS</p>
+                    <p class="text-slate-300 leading-relaxed">Aplikasi terintegrasi dengan Google Sheets secara otomatis. Bekerja fleksibel offline & online.</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: WALI MURID DASHBOARD (HANYA UNTUK SATU ANAK) -->
+        <section id="waliSection" class="hidden space-y-4 max-w-md mx-auto">
+            <!-- Header Profil Anak -->
+            <div id="studentProfileHeader" class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-2xl shadow-md space-y-3 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 text-white/10 text-8xl pointer-events-none">
+                    <i class="fa-solid fa-child"></i>
+                </div>
+
+                <div class="flex items-center gap-3.5 relative z-10">
+                    <div id="studentAvatar" class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white font-extrabold text-2xl flex items-center justify-center shadow-inner">
+                        A
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-md">Laporan Perkembangan Anak</span>
+                        <h2 id="waliStudentName" class="text-lg font-bold text-white leading-tight mt-0.5">Ahmad Rayhan</h2>
+                        <p id="waliStudentInfo" class="text-xs text-emerald-100 font-medium">Kelas 4A • SDN 01 Jakarta</p>
+                    </div>
+                </div>
+
+                <!-- Fast Summary Indicators -->
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/20 relative z-10 text-center">
+                    <div class="bg-white/10 rounded-xl p-2">
+                        <span class="text-[9px] uppercase tracking-wider text-emerald-200 block font-semibold">Total Laporan</span>
+                        <span id="waliTotalLaporan" class="text-base font-bold text-white">0</span>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-2">
+                        <span class="text-[9px] uppercase tracking-wider text-emerald-200 block font-semibold">Sangat Baik</span>
+                        <span id="waliTotalSangatBaik" class="text-base font-bold text-white">0</span>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-2">
+                        <span class="text-[9px] uppercase tracking-wider text-emerald-200 block font-semibold">Perlu Bimbingan</span>
+                        <span id="waliTotalEvaluasi" class="text-base font-bold text-white">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Mata Pelajaran / Cari -->
+            <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex gap-2 items-center">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchWaliSubject" oninput="renderWaliReports()" placeholder="Cari Mata Pelajaran / Catatan..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+                <select id="filterWaliStatus" onchange="renderWaliReports()" class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none">
+                    <option value="semua">Semua Status</option>
+                    <option value="Sangat Baik">Sangat Baik</option>
+                    <option value="Baik">Baik</option>
+                    <option value="Perlu Bimbingan">Perlu Bimbingan</option>
+                </select>
+            </div>
+
+            <!-- Timeline Daftar Laporan Anak -->
+            <div class="space-y-2">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Timeline Perkembangan Belajar</h3>
+                <div id="daftarLaporanWaliAnak" class="space-y-3 min-h-[200px]">
+                    <!-- Dynamic Reports cards will be populated here -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 3: GURU DASHBOARD (LIVE REKAP & FORM INPUT) -->
+        <section id="guruSection" class="hidden space-y-4">
+            <!-- Header Guru Info Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 font-bold flex items-center justify-center text-lg border border-brand-100">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">Selamat Bertugas</p>
+                        <h2 id="guruLoggedInName" class="font-bold text-slate-900 text-sm">Nama Guru Pengajar</h2>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs Guru -->
+                <div class="bg-slate-100 p-1 rounded-xl flex gap-1 w-full sm:w-auto">
+                    <button id="btnGuruNavLive" onclick="switchGuruSubTab('live')" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
+                        <i class="fa-solid fa-chart-line mr-1 text-brand-600"></i> Rekap Laporan Live
+                    </button>
+                    <button id="btnGuruNavInput" onclick="switchGuruSubTab('input')" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800">
+                        <i class="fa-solid fa-plus-circle mr-1 text-emerald-600"></i> Input Laporan Baru
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 1: LIVE REKAP DASHBOARD GURU -->
+            <div id="guruLiveTab" class="space-y-4">
+                <!-- Stat Ringkasan Guru -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Total Murid Anda</p>
+                        <p id="statGuruTotalSiswa" class="text-xl font-extrabold text-slate-800 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Total Laporan Dibuat</p>
+                        <p id="statGuruTotalLaporan" class="text-xl font-extrabold text-brand-600 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <p class="text-[10px] uppercase font-bold text-emerald-600">Perkembangan Baik</p>
+                        <p id="statGuruBaik" class="text-xl font-extrabold text-emerald-600 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <p class="text-[10px] uppercase font-bold text-amber-600">Perlu Bimbingan</p>
+                        <p id="statGuruBimbingan" class="text-xl font-extrabold text-amber-600 mt-0.5">0</p>
+                    </div>
+                </div>
+
+                <!-- Filter Controls Live Rekap -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-filter text-brand-500"></i> Filter & Filter Siswa Live
+                        </h3>
+                        <button onclick="resetGuruFilters()" class="text-[11px] font-semibold text-brand-600 hover:underline">Reset Filter</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <!-- Filter Pilih Murid -->
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Pilih Murid Saya</label>
+                            <select id="filterGuruStudent" onchange="renderGuruLiveReports()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-brand-500">
+                                <option value="semua">-- Semua Murid Saya --</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Kelas -->
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Filter Kelas</label>
+                            <select id="filterGuruKelas" onchange="renderGuruLiveReports()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-brand-500">
+                                <option value="semua">Semua Kelas</option>
+                            </select>
+                        </div>
+
+                        <!-- Pencarian Text -->
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Cari Kata Kunci</label>
+                            <input type="text" id="filterGuruKeyword" oninput="renderGuruLiveReports()" placeholder="Mapel / Catatan / Siswa..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rekap Live Feed -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Rekap Laporan Perkembangan Real-Time</h3>
+                        <span id="liveCounterBadge" class="text-[11px] font-bold px-2 py-0.5 bg-brand-50 text-brand-600 rounded-full border border-brand-100">0 Laporan</span>
+                    </div>
+
+                    <div id="daftarLaporanLiveGuru" class="grid grid-cols-1 md:grid-cols-2 gap-3 min-h-[250px]">
+                        <!-- Dynamic Live Cards Rendered Here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 2: FORM INPUT LAPORAN BARU GURU -->
+            <div id="guruInputTab" class="hidden max-w-lg mx-auto">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-brand-600"></i> Form Laporan Perkembangan
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Tambah catatan dan evaluasi perkembangan murid kelompok Anda.</p>
+                    </div>
+
+                    <form id="laporanForm" onsubmit="handleFormLaporanSubmit(event)" class="space-y-3.5">
+                        <!-- Guru Auto Profile -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">Guru / Pengajar</label>
+                            <input type="text" id="formNamaGuru" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none">
+                        </div>
+
+                        <!-- Pilih Murid Kelompok Guru Ini -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">Pilih Nama Murid <span class="text-red-500">*</span></label>
+                            <select id="formNamaSiswa" required onchange="autoFillStudentDetails()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                                <option value="">-- Pilih Murid Kelompok Anda --</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1">*Hanya menampilkan daftar murid yang Anda ajar.</p>
+                        </div>
+
+                        <!-- Grid Sekolah & Kelas (Autofill or Manual) -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 block mb-1">Sekolah <span class="text-red-500">*</span></label>
+                                <input type="text" id="formSekolah" required placeholder="Nama Sekolah" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 block mb-1">Kelas <span class="text-red-500">*</span></label>
+                                <input type="text" id="formKelas" required placeholder="Kelas Contoh: 4A" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Mata Pelajaran -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">Mata Pelajaran <span class="text-red-500">*</span></label>
+                            <input type="text" id="formMataPelajaran" required placeholder="Contoh: Matematika / Bahasa Inggris" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                        </div>
+
+                        <!-- Status Perkembangan -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">Tingkat Perkembangan <span class="text-red-500">*</span></label>
+                            <select id="formStatusPerkembangan" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                                <option value="Sangat Baik">🌟 Sangat Baik (A)</option>
+                                <option value="Baik" selected>👍 Baik (B)</option>
+                                <option value="Perlu Bimbingan">💡 Perlu Bimbingan (C)</option>
+                            </select>
+                        </div>
+
+                        <!-- Catatan Laporan -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 block mb-1">Catatan Perkembangan & Laporan Detail <span class="text-red-500">*</span></label>
+                            <textarea id="formCatatan" rows="4" required placeholder="Tuliskan evaluasi belajar, materi yang dikuasai, serta saran perbaikan untuk wali murid..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none resize-none"></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="btnSimpan" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Laporan Real-Time
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DETAIL LAPORAN WALI & GURU -->
+    <div id="modalDetailLaporan" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden transition-opacity">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-sm">Rincian Laporan Belajar</h3>
+                </div>
+                <button onclick="closeModalDetail()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="modalDetailContent" class="space-y-3">
+                <!-- Content generated via JS -->
+            </div>
+
+            <button onclick="closeModalDetail()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none transform translate-y-3 max-w-xs w-full justify-between">
+        <span id="toastMessage" class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400"></i> Pesan notifikasi</span>
+        <button onclick="hideToast()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // WEB APP URL GOOGLE APPS SCRIPT
+        const WEB_APP_URL = "URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI";
+
+        // MASTER SISWA (LENGKAP DENGAN KODE PIN LOGIN WALI & PENGELOMPOKAN GURU)
+        const MASTER_SISWA = [
+            { id: "S01", nama: "Ahmad Rayhan", pin: "1234", kelas: "Kelas 4A", sekolah: "SDN 01 Jakarta", guruPengajar: "Ahmad Fauzi, S.Pd" },
+            { id: "S02", nama: "Siti Aisyah", pin: "5678", kelas: "Kelas 2B", sekolah: "SDN 01 Jakarta", guruPengajar: "Nabila Putri, M.Pd" },
+            { id: "S03", nama: "Bagas Pratama", pin: "1111", kelas: "Kelas 3C", sekolah: "SD Inovasi Mandiri", guruPengajar: "Ahmad Fauzi, S.Pd" },
+            { id: "S04", nama: "Dewi Kartika", pin: "8888", kelas: "Kelas 4A", sekolah: "SDN 01 Jakarta", guruPengajar: "Nabila Putri, M.Pd" },
+            { id: "S05", nama: "Rizky Ramadhan", pin: "9999", kelas: "Kelas 5B", sekolah: "SD Inovasi Mandiri", guruPengajar: "Ahmad Fauzi, S.Pd" }
+        ];
+
+        // MASTER GURU
+        const MASTER_GURU = [
+            { id: "G01", nama: "Ahmad Fauzi, S.Pd", username: "fauzi", password: "guru123" },
+            { id: "G02", nama: "Nabila Putri, M.Pd", username: "nabila", password: "guru123" }
+        ];
+
+        // DUMMY INITIAL REPORTS
+        const INITIAL_LAPORAN = [
+            {
+                id: 101,
+                tanggal: "23 Okt 2026",
+                namaSiswa: "Ahmad Rayhan",
+                kelas: "Kelas 4A",
+                sekolah: "SDN 01 Jakarta",
+                namaGuru: "Ahmad Fauzi, S.Pd",
+                mataPelajaran: "Matematika",
+                statusPerkembangan: "Sangat Baik",
+                catatan: "Rayhan menunjukkan pemahaman luar biasa pada materi Perkalian Bersusun dan Soal Cerita. Sangat aktif berpartisipasi di kelas."
+            },
+            {
+                id: 102,
+                tanggal: "22 Okt 2026",
+                namaSiswa: "Siti Aisyah",
+                kelas: "Kelas 2B",
+                sekolah: "SDN 01 Jakarta",
+                namaGuru: "Nabila Putri, M.Pd",
+                mataPelajaran: "Bahasa Indonesia",
+                statusPerkembangan: "Baik",
+                catatan: "Membaca lancar dan artikulasi jelas. Perlu sedikit latihan dalam menyusun kalimat efektif dan penerapan tanda baca."
+            },
+            {
+                id: 103,
+                tanggal: "21 Okt 2026",
+                namaSiswa: "Bagas Pratama",
+                kelas: "Kelas 3C",
+                sekolah: "SD Inovasi Mandiri",
+                namaGuru: "Ahmad Fauzi, S.Pd",
+                mataPelajaran: "IPA",
+                statusPerkembangan: "Perlu Bimbingan",
+                catatan: "Memerlukan pendampingan ekstra pada konsep Daur Hidup Hewan. Disarankan membaca kembali bab 3 di rumah bersama orang tua."
+            },
+            {
+                id: 104,
+                tanggal: "20 Okt 2026",
+                namaSiswa: "Dewi Kartika",
+                kelas: "Kelas 4A",
+                sekolah: "SDN 01 Jakarta",
+                namaGuru: "Nabila Putri, M.Pd",
+                mataPelajaran: "Bahasa Inggris",
+                statusPerkembangan: "Sangat Baik",
+                catatan: "Sangat percaya diri dalam pengucapan kosakata baru dan pengerjaan tugas tepat waktu."
+            }
+        ];
+
+        // Global State Management
+        let currentAuthUser = null; // { role: 'wali'|'guru', data: {...} }
+        let allReports = [];
+
+        // Application Init
+        document.addEventListener("DOMContentLoaded", function() {
+            loadLocalReports();
+            populateAuthDropdowns();
+            checkSavedSession();
+            fetchLaporanFromGAS();
+        });
+
+        // Local Storage Handler
+        function loadLocalReports() {
+            const saved = localStorage.getItem("privatku_reports");
+            if (saved) {
+                try {
+                    allReports = JSON.parse(saved);
+                } catch(e) {
+                    allReports = [...INITIAL_LAPORAN];
+                }
+            } else {
+                allReports = [...INITIAL_LAPORAN];
+                saveLocalReports();
+            }
+        }
+
+        function saveLocalReports() {
+            localStorage.setItem("privatku_reports", JSON.stringify(allReports));
+        }
+
+        // Populate Dropdowns in Login Forms
+        function populateAuthDropdowns() {
+            const siswaSelect = document.getElementById("loginSiswaSelect");
+            siswaSelect.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
+            MASTER_SISWA.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                opt.textContent = `${s.nama} (${s.kelas})`;
+                siswaSelect.appendChild(opt);
+            });
+
+            const guruSelect = document.getElementById("loginGuruSelect");
+            guruSelect.innerHTML = '<option value="">-- Pilih Akun Guru --</option>';
+            MASTER_GURU.forEach(g => {
+                const opt = document.createElement("option");
+                opt.value = g.id;
+                opt.textContent = g.nama;
+                guruSelect.appendChild(opt);
+            });
+        }
+
+        // Switch Auth Login Tabs
+        function switchLoginTab(role) {
+            const tabWali = document.getElementById("tabWali");
+            const tabGuru = document.getElementById("tabGuru");
+            const formWali = document.getElementById("formLoginWali");
+            const formGuru = document.getElementById("formLoginGuru");
+
+            if (role === 'wali') {
+                tabWali.className = "py-2.5 text-xs font-bold rounded-xl transition-all bg-white text-slate-800 shadow-sm";
+                tabGuru.className = "py-2.5 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800";
+                formWali.classList.remove("hidden");
+                formGuru.classList.add("hidden");
+            } else {
+                tabGuru.className = "py-2.5 text-xs font-bold rounded-xl transition-all bg-white text-slate-800 shadow-sm";
+                tabWali.className = "py-2.5 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800";
+                formGuru.classList.remove("hidden");
+                formWali.classList.add("hidden");
+            }
+        }
+
+        function togglePinVisibility(id) {
+            const inp = document.getElementById(id);
+            if (inp.type === "password") inp.type = "text";
+            else inp.type = "password";
+        }
+
+        // AUTHENTICATION LOGIC: WALI MURID LOGIN
+        function handleWaliLogin(e) {
+            e.preventDefault();
+            const studentId = document.getElementById("loginSiswaSelect").value;
+            const pinEntered = document.getElementById("loginSiswaPin").value;
+
+            const student = MASTER_SISWA.find(s => s.id === studentId);
+            if (!student) {
+                showToast("Pilih nama siswa terlebih dahulu!");
+                return;
+            }
+
+            if (student.pin !== pinEntered) {
+                showToast("Kode PIN Siswa salah! Silakan periksa kembali.");
+                return;
+            }
+
+            // Set Session
+            currentAuthUser = { role: 'wali', data: student };
+            localStorage.setItem("privatku_session", JSON.stringify(currentAuthUser));
+
+            showToast(`Berhasil masuk sebagai Wali dari ${student.nama}`);
+            renderUIForCurrentSession();
+        }
+
+        // AUTHENTICATION LOGIC: GURU LOGIN
+        function handleGuruLogin(e) {
+            e.preventDefault();
+            const guruId = document.getElementById("loginGuruSelect").value;
+            const passEntered = document.getElementById("loginGuruPass").value;
+
+            const guru = MASTER_GURU.find(g => g.id === guruId);
+            if (!guru) {
+                showToast("Pilih akun guru!");
+                return;
+            }
+
+            if (guru.password !== passEntered) {
+                showToast("Password salah!");
+                return;
+            }
+
+            // Set Session
+            currentAuthUser = { role: 'guru', data: guru };
+            localStorage.setItem("privatku_session", JSON.stringify(currentAuthUser));
+
+            showToast(`Selamat datang, ${guru.nama}`);
+            renderUIForCurrentSession();
+        }
+
+        function checkSavedSession() {
+            const saved = localStorage.getItem("privatku_session");
+            if (saved) {
+                try {
+                    currentAuthUser = JSON.parse(saved);
+                    renderUIForCurrentSession();
+                } catch(e) {
+                    logout();
+                }
+            } else {
+                renderUIForCurrentSession();
+            }
+        }
+
+        function logout() {
+            currentAuthUser = null;
+            localStorage.removeItem("privatku_session");
+            showToast("Anda telah keluar dari aplikasi");
+            renderUIForCurrentSession();
+        }
+
+        // UI RENDER SWITCHER BASED ON AUTH SESSION
+        function renderUIForCurrentSession() {
+            const authSection = document.getElementById("authSection");
+            const waliSection = document.getElementById("waliSection");
+            const guruSection = document.getElementById("guruSection");
+            const btnLogout = document.getElementById("btnLogout");
+            const activeRoleBadge = document.getElementById("activeRoleBadge");
+            const roleBadgeText = document.getElementById("roleBadgeText");
+            const roleDot = document.getElementById("roleDot");
+
+            if (!currentAuthUser) {
+                // Show Auth Screen Only
+                authSection.classList.remove("hidden");
+                waliSection.classList.add("hidden");
+                guruSection.classList.add("hidden");
+                btnLogout.classList.add("hidden");
+
+                activeRoleBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5";
+                roleDot.className = "w-2 h-2 rounded-full bg-slate-400";
+                roleBadgeText.textContent = "Belum Login";
+                return;
+            }
+
+            btnLogout.classList.remove("hidden");
+            authSection.classList.add("hidden");
+
+            if (currentAuthUser.role === 'wali') {
+                // Render Wali View (Strictly only 1 student)
+                waliSection.classList.remove("hidden");
+                guruSection.classList.add("hidden");
+
+                activeRoleBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5";
+                roleDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                roleBadgeText.textContent = `Wali: ${currentAuthUser.data.nama}`;
+
+                setupWaliDashboard();
+            } else if (currentAuthUser.role === 'guru') {
+                // Render Multi-Teacher View
+                guruSection.classList.remove("hidden");
+                waliSection.classList.add("hidden");
+
+                activeRoleBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-1.5";
+                roleDot.className = "w-2 h-2 rounded-full bg-brand-500 animate-pulse";
+                roleBadgeText.textContent = `Guru: ${currentAuthUser.data.nama.split(',')[0]}`;
+
+                setupGuruDashboard();
+            }
+        }
+
+        // ==========================================
+        // WALI MURID SPECIFIC LOGIC (PROTECTED VIEW)
+        // ==========================================
+        function setupWaliDashboard() {
+            const student = currentAuthUser.data;
+
+            document.getElementById("studentAvatar").textContent = (student.nama || "S").charAt(0);
+            document.getElementById("waliStudentName").textContent = student.nama;
+            document.getElementById("waliStudentInfo").textContent = `${student.kelas} • ${student.sekolah}`;
+
+            renderWaliReports();
+        }
+
+        function renderWaliReports() {
+            const student = currentAuthUser.data;
+            const searchVal = (document.getElementById("searchWaliSubject").value || "").toLowerCase();
+            const filterStatus = document.getElementById("filterWaliStatus").value;
+
+            // STRICT FILTER: Hanya mengambil laporan anak ini saja!
+            const studentReports = allReports.filter(r => 
+                (r.namaSiswa || "").toLowerCase() === student.nama.toLowerCase()
+            );
+
+            // Filter pencarian & status
+            const filtered = studentReports.filter(r => {
+                const matchQuery = (r.mataPelajaran || "").toLowerCase().includes(searchVal) ||
+                                   (r.catatan || "").toLowerCase().includes(searchVal);
+                const matchStatus = filterStatus === "semua" || r.statusPerkembangan === filterStatus;
+                return matchQuery && matchStatus;
+            });
+
+            // Update Header Stats
+            document.getElementById("waliTotalLaporan").textContent = studentReports.length;
+            document.getElementById("waliTotalSangatBaik").textContent = studentReports.filter(r => r.statusPerkembangan === "Sangat Baik").length;
+            document.getElementById("waliTotalEvaluasi").textContent = studentReports.filter(r => r.statusPerkembangan === "Perlu Bimbingan").length;
+
+            const container = document.getElementById("daftarLaporanWaliAnak");
+            container.innerHTML = "";
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 text-center space-y-2">
+                        <i class="fa-regular fa-folder-open text-3xl text-slate-300"></i>
+                        <p class="text-xs font-semibold text-slate-600">Belum ada catatan laporan untuk ${student.nama}</p>
+                        <p class="text-[11px] text-slate-400">Guru pengajar akan memperbarui laporan secara berkala.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let badgeStyle = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                let badgeIcon = "fa-circle-check";
+
+                if (item.statusPerkembangan === "Perlu Bimbingan") {
+                    badgeStyle = "bg-amber-50 text-amber-700 border-amber-200";
+                    badgeIcon = "fa-circle-exclamation";
+                } else if (item.statusPerkembangan === "Baik") {
+                    badgeStyle = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                    badgeIcon = "fa-thumbs-up";
+                }
+
+                const card = document.createElement("div");
+                card.className = "bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 cursor-pointer active:scale-[0.99]";
+                card.onclick = () => openModalDetail(item);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-book-open text-brand-500"></i> ${item.mataPelajaran}
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeStyle} flex items-center gap-1">
+                            <i class="fa-solid ${badgeIcon} text-[9px]"></i> ${item.statusPerkembangan}
+                        </span>
+                    </div>
+
+                    <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                        "${item.catatan}"
+                    </p>
+
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-user-tie"></i> ${item.namaGuru}</span>
+                        <span class="font-medium"><i class="fa-solid fa-calendar-day mr-1"></i>${item.tanggal}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // ==========================================
+        // GURU DASHBOARD & LIVE REPORT REKAP LOGIC
+        // ==========================================
+        function setupGuruDashboard() {
+            const guru = currentAuthUser.data;
+            document.getElementById("guruLoggedInName").textContent = guru.nama;
+            document.getElementById("formNamaGuru").value = guru.nama;
+
+            // Dapatkan daftar murid yang DIAJAR OLEH GURU INI SAJA
+            const myStudents = MASTER_SISWA.filter(s => s.guruPengajar === guru.nama);
+
+            // Populate Form Input Dropdown Murid (Hanya murid guru ini)
+            const formSiswaSelect = document.getElementById("formNamaSiswa");
+            formSiswaSelect.innerHTML = '<option value="">-- Pilih Murid Kelompok Anda --</option>';
+            myStudents.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.nama;
+                opt.textContent = `${s.nama} (${s.kelas})`;
+                formSiswaSelect.appendChild(opt);
+            });
+
+            // Populate Filter Murid Live Dashboard
+            const filterGuruStudentSelect = document.getElementById("filterGuruStudent");
+            filterGuruStudentSelect.innerHTML = '<option value="semua">-- Semua Murid Saya --</option>';
+            myStudents.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.nama;
+                opt.textContent = s.nama;
+                filterGuruStudentSelect.appendChild(opt);
+            });
+
+            // Populate Filter Kelas (Unique)
+            const kelasList = [...new Set(myStudents.map(s => s.kelas))];
+            const filterGuruKelasSelect = document.getElementById("filterGuruKelas");
+            filterGuruKelasSelect.innerHTML = '<option value="semua">Semua Kelas</option>';
+            kelasList.forEach(k => {
+                const opt = document.createElement("option");
+                opt.value = k;
+                opt.textContent = k;
+                filterGuruKelasSelect.appendChild(opt);
+            });
+
+            renderGuruLiveReports();
+        }
+
+        function switchGuruSubTab(tab) {
+            const liveTab = document.getElementById("guruLiveTab");
+            const inputTab = document.getElementById("guruInputTab");
+            const btnLive = document.getElementById("btnGuruNavLive");
+            const btnInput = document.getElementById("btnGuruNavInput");
+
+            if (tab === 'live') {
+                liveTab.classList.remove("hidden");
+                inputTab.classList.add("hidden");
+                btnLive.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+                btnInput.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800";
+                renderGuruLiveReports();
+            } else {
+                inputTab.classList.remove("hidden");
+                liveTab.classList.add("hidden");
+                btnInput.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+                btnLive.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800";
+            }
+        }
+
+        function autoFillStudentDetails() {
+            const selectedNama = document.getElementById("formNamaSiswa").value;
+            const student = MASTER_SISWA.find(s => s.nama === selectedNama);
+
+            if (student) {
+                document.getElementById("formSekolah").value = student.sekolah;
+                document.getElementById("formKelas").value = student.kelas;
+            }
+        }
+
+        function renderGuruLiveReports() {
+            const guru = currentAuthUser.data;
+            const myStudents = MASTER_SISWA.filter(s => s.guruPengajar === guru.nama);
+            const myStudentNames = myStudents.map(s => s.nama.toLowerCase());
+
+            // Laporan yang relevan dengan kelompok guru ini
+            const myGroupReports = allReports.filter(r => 
+                myStudentNames.includes((r.namaSiswa || "").toLowerCase()) || r.namaGuru === guru.nama
+            );
+
+            // Filter Controls
+            const selectedStudent = document.getElementById("filterGuruStudent").value;
+            const selectedKelas = document.getElementById("filterGuruKelas").value;
+            const keyword = (document.getElementById("filterGuruKeyword").value || "").toLowerCase();
+
+            const filtered = myGroupReports.filter(r => {
+                const matchStudent = selectedStudent === "semua" || r.namaSiswa === selectedStudent;
+                const matchKelas = selectedKelas === "semua" || r.kelas === selectedKelas;
+                const matchKey = (r.namaSiswa || "").toLowerCase().includes(keyword) ||
+                                 (r.mataPelajaran || "").toLowerCase().includes(keyword) ||
+                                 (r.catatan || "").toLowerCase().includes(keyword);
+                return matchStudent && matchKelas && matchKey;
+            });
+
+            // Update Stats Guru
+            document.getElementById("statGuruTotalSiswa").textContent = myStudents.length;
+            document.getElementById("statGuruTotalLaporan").textContent = myGroupReports.length;
+            document.getElementById("statGuruBaik").textContent = myGroupReports.filter(r => r.statusPerkembangan === "Sangat Baik" || r.statusPerkembangan === "Baik").length;
+            document.getElementById("statGuruBimbingan").textContent = myGroupReports.filter(r => r.statusPerkembangan === "Perlu Bimbingan").length;
+            document.getElementById("liveCounterBadge").textContent = `${filtered.length} Laporan Live`;
+
+            const container = document.getElementById("daftarLaporanLiveGuru");
+            container.innerHTML = "";
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-1 md:col-span-2 bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-2">
+                        <i class="fa-solid fa-list-check text-3xl text-slate-300"></i>
+                        <p class="text-xs font-semibold text-slate-600">Tidak ada data rekapitulasi laporan ditemukan</p>
+                        <p class="text-[11px] text-slate-400">Coba ubah kata kunci atau buat laporan baru di tab 'Input Laporan Baru'.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let badgeStyle = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                let badgeIcon = "fa-circle-check";
+
+                if (item.statusPerkembangan === "Perlu Bimbingan") {
+                    badgeStyle = "bg-amber-50 text-amber-700 border-amber-200";
+                    badgeIcon = "fa-circle-exclamation";
+                } else if (item.statusPerkembangan === "Baik") {
+                    badgeStyle = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                    badgeIcon = "fa-thumbs-up";
+                }
+
+                const card = document.createElement("div");
+                card.className = "bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 cursor-pointer active:scale-[0.99]";
+                card.onclick = () => openModalDetail(item);
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-brand-50 text-brand-600 font-bold flex items-center justify-center text-xs border border-brand-100">
+                                ${(item.namaSiswa || 'S').charAt(0)}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-xs">${item.namaSiswa}</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">${item.kelas} • ${item.sekolah}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeStyle} flex items-center gap-1">
+                            <i class="fa-solid ${badgeIcon} text-[9px]"></i> ${item.statusPerkembangan}
+                        </span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-800"><i class="fa-solid fa-book-open text-brand-500 mr-1"></i> ${item.mataPelajaran}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">${item.tanggal}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            "${item.catatan}"
+                        </p>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                        <span class="text-slate-500 text-[10px]"><i class="fa-solid fa-user-tie"></i> ${item.namaGuru}</span>
+                        <span class="text-brand-600 font-semibold flex items-center gap-1 text-[11px]">Lihat Detail <i class="fa-solid fa-chevron-right text-[9px]"></i></span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function resetGuruFilters() {
+            document.getElementById("filterGuruStudent").value = "semua";
+            document.getElementById("filterGuruKelas").value = "semua";
+            document.getElementById("filterGuruKeyword").value = "";
+            renderGuruLiveReports();
+        }
+
+        // FORM SUBMISSION (GURU INPUT)
+        function handleFormLaporanSubmit(e) {
+            e.preventDefault();
+
+            const btnSimpan = document.getElementById("btnSimpan");
+            btnSimpan.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Mengirim Laporan...`;
+            btnSimpan.disabled = true;
+
+            const newLaporan = {
+                id: Date.now(),
+                tanggal: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }),
+                namaGuru: document.getElementById("formNamaGuru").value,
+                sekolah: document.getElementById("formSekolah").value,
+                kelas: document.getElementById("formKelas").value,
+                namaSiswa: document.getElementById("formNamaSiswa").value,
+                mataPelajaran: document.getElementById("formMataPelajaran").value,
+                statusPerkembangan: document.getElementById("formStatusPerkembangan").value,
+                catatan: document.getElementById("formCatatan").value
+            };
+
+            // Simpan ke array lokal & LocalStorage
+            allReports.unshift(newLaporan);
+            saveLocalReports();
+
+            // Kirim ke Google Apps Script (jika ada API)
+            if (WEB_APP_URL && !WEB_APP_URL.includes("URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI")) {
+                fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(newLaporan)
+                })
+                .then(res => res.json())
+                .then(data => finishFormSubmission(btnSimpan))
+                .catch(err => finishFormSubmission(btnSimpan));
+            } else {
+                setTimeout(() => finishFormSubmission(btnSimpan), 600);
+            }
+        }
+
+        function finishFormSubmission(btnSimpan) {
+            btnSimpan.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim Laporan Real-Time`;
+            btnSimpan.disabled = false;
+            document.getElementById("laporanForm").reset();
+            document.getElementById("formNamaGuru").value = currentAuthUser.data.nama;
+
+            showToast("Laporan perkembangan berhasil dikirim secara live!");
+            switchGuruSubTab('live');
+        }
+
+        // FETCH DATA GOOGLE APPS SCRIPT
+        function fetchLaporanFromGAS() {
+            if (!WEB_APP_URL || WEB_APP_URL.includes("URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI")) return;
+
+            fetch(WEB_APP_URL + "?action=getLaporan")
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        allReports = data;
+                        saveLocalReports();
+                        if (currentAuthUser) renderUIForCurrentSession();
+                    }
+                })
+                .catch(err => console.log("Menggunakan Local Database Simulasi"));
+        }
+
+        // MODAL VIEW LOGIC
+        function openModalDetail(item) {
+            const content = document.getElementById("modalDetailContent");
+            content.innerHTML = `
+                <div class="bg-brand-50/70 p-3.5 rounded-2xl border border-brand-100 space-y-1">
+                    <p class="text-[10px] font-bold text-brand-600 uppercase tracking-wider">Laporan Perkembangan Siswa</p>
+                    <h4 class="text-base font-bold text-slate-900">${item.namaSiswa}</h4>
+                    <p class="text-xs text-slate-500">${item.kelas} • ${item.sekolah}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Mata Pelajaran</span>
+                        <span class="font-bold text-slate-800 mt-0.5 block">${item.mataPelajaran}</span>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Tanggal Laporan</span>
+                        <span class="font-bold text-slate-800 mt-0.5 block">${item.tanggal}</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Guru Pengajar</span>
+                    <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-user-tie text-brand-600 mr-1"></i> ${item.namaGuru}</span>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <span class="text-xs font-bold text-slate-700 block">Evaluasi & Catatan Perkembangan:</span>
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed shadow-inner">
+                        ${item.catatan}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("modalDetailLaporan").classList.remove("hidden");
+        }
+
+        function closeModalDetail() {
+            document.getElementById("modalDetailLaporan").classList.add("hidden");
+        }
+
+        // TOAST NOTIFICATIONS
+        function showToast(msg) {
+            const toast = document.getElementById("toastNotification");
+            document.getElementById("toastMessage").innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${msg}`;
+            toast.classList.remove("opacity-0", "pointer-events-none", "translate-y-3");
+            setTimeout(hideToast, 3500);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById("toastNotification");
+            toast.classList.add("opacity-0", "pointer-events-none", "translate-y-3");
+        }
+    </script>
+</body>
+</html>
